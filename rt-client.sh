@@ -206,7 +206,7 @@ function git_commit() {
 
   logInfo -n "Commiting changes";
 
-  git --git-dir "${GIT_DIR}" --work-tree . status | tail -n 1 | grep "nothing added to commit" 2>&1 > /dev/null
+  git --git-dir "${GIT_DIR}" --work-tree . status | tail -n 1 | grep "nothing" | grep "commit" 2>&1 > /dev/null
   rescode=$?;
   if [ $rescode -eq 0 ]; then
     logInfoResult SUCCESS "done";
