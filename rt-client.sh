@@ -232,8 +232,11 @@ function git_commit() {
 }
 
 function git_commit_loop() {
+  local _auxPath=$(realpath ${SCRIPT_NAME});
+  local _auxFolder=$(dirname ${_auxPath});
+
   logInfo -n "Watching changes in background";
-  watch -n1 "bash -c \"$(realpath ${SCRIPT_NAME}) _ci\"" > /dev/null &
+  watch -n1 "bash -c \"export PATH=\$PATH:~/github/RT; cd ${_auxFolder}; ${SCRIPT_NAME} _ci\"" > /dev/null &
   if [ $? -eq 0 ]; then
     logInfoResult SUCCESS "done";
   else
