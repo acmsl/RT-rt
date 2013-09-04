@@ -211,7 +211,9 @@ function git_commit() {
   if [ $rescode -eq 0 ]; then
     logInfoResult SUCCESS "done";
   else
-    watch -n1 "git --git-dir \"${GIT_DIR}\" --work-tree . commit -a -m\"$(date '+%Y%m%d%H%M')\" 2>&1 > /dev/null" &
+    {
+      watch -n1 "git --git-dir \"${GIT_DIR}\" --work-tree . commit -a -m\"$(date '+%Y%m%d%H%M')\" 2>&1 > /dev/null" > /dev/null &
+    }
     rescode=$?;
     if [ $rescode -eq 0 ]; then
       logInfoResult SUCCESS "done";
