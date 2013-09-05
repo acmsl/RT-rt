@@ -210,7 +210,7 @@ function git_add_files() {
 #  find . -type f -exec file {} \; 2>&1 | grep -v target | grep text | grep -v -e '~$' | cut -d':' -f 1 | awk -vG="${GIT_DIR}" '{printf("git --git-dir %s --work-tree . add --ignore-errors %s 2>&1 > /dev/null\n", G, $0);}' | sh 2>&1 > /dev/null
   for ext in ${EXTENSIONS}; do
     local _add="'*.${ext}'";
-    echo git --git-dir "${GIT_DIR}" --work-tree . add --ignore-errors ${_add} | sh
+    echo git --git-dir "${GIT_DIR}" --work-tree . add --ignore-errors ${_add} 2>&1 > /dev/null | sh
     rescode=$?;
     if [ $rescode -ne 0 ]; then
       logInfoResult FAILURE "failed";
