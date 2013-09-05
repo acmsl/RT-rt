@@ -44,6 +44,13 @@ function defineEnv() {
     export GIT_DIR="${GIT_DIR_DEFAULT}";
   fi
 
+  export EXTENSIONS_DEFAULT="java stg properties xml jsp xsl xslt txt dsg";
+  export EXTENSIONS_DESCRIPTION="The filename extensions to deal with";
+  if   [ "${EXTENSIONS+1}" != "1" ] \
+     || [ "x${EXTENSIONS}" == "x" ]; then
+    export EXTENSIONS="${EXTENSIONS_DEFAULT}";
+  fi
+  
   ENV_VARIABLES=(\
     GIT_BASEDIR \
     GIT_DIR \
@@ -202,7 +209,8 @@ function git_add_files() {
 
 #  find . -type f -exec file {} \; 2>&1 | grep -v target | grep text | grep -v -e '~$' | cut -d':' -f 1 | awk -vG="${GIT_DIR}" '{printf("git --git-dir %s --work-tree . add --ignore-errors %s 2>&1 > /dev/null\n", G, $0);}' | sh 2>&1 > /dev/null
   for ext in ${EXTENSIONS}; do
-    git --git-dir "${GIT_DIR}" --work-tree . add --ignore-errors /\*.${ext}
+    local _add="'*.${ext}'";
+    echo git --git-dir "${GIT_DIR}" --work-tree . add --ignore-errors ${_add}
     rescode=$?;
     if [ $rescode -ne 0 ]; then
       logInfoResult FAILURE "failed";
