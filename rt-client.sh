@@ -213,6 +213,8 @@ function git_add_files() {
 function git_commit() {
   local rescode=0;
 
+  git-add-files;
+
   logInfo -n "Commiting changes";
 
   git --git-dir "${GIT_DIR}" --work-tree . status | tail -n 1 | grep "nothing" | grep "commit" 2>&1 > /dev/null
