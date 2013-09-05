@@ -213,7 +213,7 @@ function git_add_files() {
 function git_commit() {
   local rescode=0;
 
-  git-add-files;
+  git_add_files;
 
   logInfo -n "Commiting changes";
 
