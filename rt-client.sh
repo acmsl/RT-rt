@@ -143,28 +143,41 @@ function checkInput() {
 
 function main() {
 
-  check_not_already_running "${COMMAND}";
-
-  if [ $? -eq 0 ]; then
-    case "${COMMAND}" in
-      "init")
+  case "${COMMAND}" in
+    "init")
+      check_not_already_running "${COMMAND}";
+      if [ $? -eq 0 ]; then
+        create_lock_file "${COMMAND}";
         git_init "${REMOTE_REPOS}";
-        ;;
-      "commit")
+        delete_lock_file "${COMMAND}";
+      else
+        exitWithErrorCode ANOTHER_RT_ALREADY_RUNNING;
+      fi       
+      ;;
+    "commit")
+      if [ $? -eq 0 ]; then
+        create_lock_file "${COMMAND}";
         git_commit_loop;
-        ;;
-      "_ci")
-        git_commit;
-        ;;
-      "push")
+        delete_lock_file "${COMMAND}";
+      else
+        exitWithErrorCode ANOTHER_RT_ALREADY_RUNNING;
+      fi       
+      ;;
+    "_ci")
+      git_commit;
+      ;;
+    "push")
+      if [ $? -eq 0 ]; then
+        create_lock_file "${COMMAND}";
         git_push;
-        ;;
-      *) exitWithErrorCode INVALID_COMMAND;
-        ;;
+        delete_lock_file "${COMMAND}";
+      else
+        exitWithErrorCode ANOTHER_RT_ALREADY_RUNNING;
+      fi       
+      ;;
+    *) exitWithErrorCode INVALID_COMMAND;
+      ;;
     esac
-  else
-    exitWithErrorCode ANOTHER_RT_ALREADY_RUNNING;
-  fi
 }
 
 function check_not_already_running() {
@@ -185,9 +198,17 @@ function check_not_already_running() {
 }
 
 function create_lock_file() {
+  local command="${1}";
   local _auxPath="$(realpath ${SCRIPT_NAME})";
   local _lockFile="$(dirname "${_auxPath}")/.${SCRIPT_NAME}-${command}.lock";
   echo $$ > "${_lockFile}";
+}
+
+function create_lock_file() {
+  local command="${1}";
+  local _auxPath="$(realpath ${SCRIPT_NAME})";
+  local _lockFile="$(dirname "${_auxPath}")/.${SCRIPT_NAME}-${command}.lock";
+  rm -f "${_lockFile}" 2>&1 > /dev/null;
 }
 
 function git_init() {
