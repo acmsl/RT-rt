@@ -204,7 +204,7 @@ function create_lock_file() {
   echo $$ > "${_lockFile}";
 }
 
-function create_lock_file() {
+function delete_lock_file() {
   local command="${1}";
   local _auxPath="$(realpath ${SCRIPT_NAME})";
   local _lockFile="$(dirname "${_auxPath}")/.${SCRIPT_NAME}-${command}.lock";
