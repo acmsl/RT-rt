@@ -26,6 +26,7 @@ EOF
 # Requirements
 function checkRequirements() {
   checkReq git GIT_NOT_INSTALLED;
+  checkReq watch WATCH_NOT_INSTALLED;
 }
  
 # Environment
@@ -54,6 +55,7 @@ function defineEnv() {
   ENV_VARIABLES=(\
     GIT_BASEDIR \
     GIT_DIR \
+    EXTENSIONS \
   );
  
   export ENV_VARIABLES;
@@ -73,6 +75,7 @@ function defineErrors() {
   export CANNOT_COMMIT_CHANGES="Cannot commit changes";
   export CANNOT_WATCH_CHANGES_IN_BACKGROUND="Cannot watch changes in background";
   export CANNOT_PUSH_CHANGES="Cannot push changes";
+  export ANOTHER_RT_ALREADY_RUNNING="Another ${SCRIPT_NAME} process is already running";
 
   ERROR_MESSAGES=(\
     INVALID_OPTION \
@@ -87,6 +90,7 @@ function defineErrors() {
     CANNOT_COMMIT_CHANGES \
     CANNOT_WATCH_CHANGES_IN_BACKGROUND \
     CANNOT_PUSH_CHANGES \
+    ANOTHER_RT_ALREADY_RUNNING \
   );
 
   export ERROR_MESSAGES;
@@ -139,22 +143,45 @@ function checkInput() {
 
 function main() {
 
-  case "${COMMAND}" in
-    "init")
-      git_init "${REMOTE_REPOS}";
-      ;;
-    "commit")
-      git_commit_loop;
-      ;;
-    "_ci")
-      git_commit;
-      ;;
-    "push")
-      git_push;
-      ;;
-    *) exitWithErrorCode INVALID_COMMAND;
-      ;;
-  esac
+  check_not_already_running;
+
+  if [ $? -eq 0 ]; then
+    case "${COMMAND}" in
+      "init")
+        git_init "${REMOTE_REPOS}";
+        ;;
+      "commit")
+        git_commit_loop;
+        ;;
+      "_ci")
+        git_commit;
+        ;;
+      "push")
+        git_push;
+        ;;
+      *) exitWithErrorCode INVALID_COMMAND;
+        ;;
+    esac
+  else
+    exitWithErrorCode ANOTHER_RT_ALREADY_RUNNING;
+  fi
+}
+
+function check_not_already_running() {
+  local rescode=0;
+  local command="${1}";
+
+  local _auxPath="$(realpath ${SCRIPT_NAME})";
+  local _lockFile="$(dirname "${_auxPath}")/.${SCRIPT_NAME}-${command}.lock";
+
+  if [ -f "${_lockFile}" ]; then
+    local _pid=$(head -n 1 "${_lockFile}" 2> /dev/null);
+    if [ -n "$(ps -p ${_pid} | grep ${_pid})" ]; then
+      rescode=1;
+    fi
+  fi
+
+  return ${rescode};
 }
 
 function git_init() {
