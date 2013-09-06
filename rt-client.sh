@@ -158,7 +158,6 @@ function main() {
       if [ $? -eq 0 ]; then
         create_lock_file "${COMMAND}";
         git_commit_loop;
-        delete_lock_file "${COMMAND}";
       else
         exitWithErrorCode ANOTHER_RT_ALREADY_RUNNING;
       fi       
