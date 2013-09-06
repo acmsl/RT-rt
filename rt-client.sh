@@ -193,6 +193,8 @@ function check_not_already_running() {
     fi
   fi
 
+  echo "returning ${rescode}";
+  exit 1;
   return ${rescode};
 }
 
