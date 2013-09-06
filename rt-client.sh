@@ -143,7 +143,7 @@ function checkInput() {
 
 function main() {
 
-  check_not_already_running;
+  check_not_already_running "${COMMAND}";
 
   if [ $? -eq 0 ]; then
     case "${COMMAND}" in
@@ -182,6 +182,12 @@ function check_not_already_running() {
   fi
 
   return ${rescode};
+}
+
+function create_lock_file() {
+  local _auxPath="$(realpath ${SCRIPT_NAME})";
+  local _lockFile="$(dirname "${_auxPath}")/.${SCRIPT_NAME}-${command}.lock";
+  echo $$ > "${_lockFile}";
 }
 
 function git_init() {
