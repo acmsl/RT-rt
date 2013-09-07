@@ -40,14 +40,14 @@ function defineEnv() {
 
   export GIT_DIR_DEFAULT="${GIT_BASEDIR}/$(basename $PWD)";
   export GIT_DIR_DESCRIPION="Where the actual git repository is located";
-  if   [ "${GIT_DIR+1}" != "1" ] \
+  if    [ "${GIT_DIR+1}" != "1" ] \
      || [ "x${GIT_DIR}" == "x" ]; then
     export GIT_DIR="${GIT_DIR_DEFAULT}";
   fi
 
   export EXTENSIONS_DEFAULT="java stg properties xml jsp xsl xslt txt dsg";
   export EXTENSIONS_DESCRIPTION="The filename extensions to deal with";
-  if   [ "${EXTENSIONS+1}" != "1" ] \
+  if    [ "${EXTENSIONS+1}" != "1" ] \
      || [ "x${EXTENSIONS}" == "x" ]; then
     export EXTENSIONS="${EXTENSIONS_DEFAULT}";
   fi
@@ -63,6 +63,7 @@ function defineEnv() {
     GIT_BASEDIR \
     GIT_DIR \
     EXTENSIONS \
+    COMMIT_FREQUENCY \
   );
  
   export ENV_VARIABLES;
@@ -83,6 +84,7 @@ function defineErrors() {
   export CANNOT_WATCH_CHANGES_IN_BACKGROUND="Cannot watch changes in background";
   export CANNOT_PUSH_CHANGES="Cannot push changes";
   export ANOTHER_RT_ALREADY_RUNNING="Another ${SCRIPT_NAME} process is already running";
+  export INVALID_COMMIT_FREQUENCY="Invalid commit frequency";
 
   ERROR_MESSAGES=(\
     INVALID_OPTION \
@@ -98,6 +100,7 @@ function defineErrors() {
     CANNOT_WATCH_CHANGES_IN_BACKGROUND \
     CANNOT_PUSH_CHANGES \
     ANOTHER_RT_ALREADY_RUNNING \
+    INVALID_COMMIT_FREQUENCY \
   );
 
   export ERROR_MESSAGES;
@@ -360,7 +363,7 @@ function git_commit_loop() {
   local _auxFolder=$(dirname ${_auxPath});
 
   logInfo -n "Watching changes in background";
-  watch -n1 "bash -c \"export PATH=\$PATH:~/github/RT; cd ${_auxFolder}; ${SCRIPT_NAME} _ci\"" > /dev/null &
+  watch -n"${COMMIT_FREQUENCY}" "bash -c \"export PATH=\$PATH:~/github/RT; cd ${_auxFolder}; ${SCRIPT_NAME} _ci\"" > /dev/null &
   if [ $? -eq 0 ]; then
     logInfoResult SUCCESS "done";
   else
