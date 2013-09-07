@@ -258,11 +258,11 @@ purge_stale_lock () {
   fi
 
   if
-    read owner shell status <"$1" &&
+    read owner shell status <"${file}" &&
     test "$status" = valid &&
     ! ps p "$shell" &&
     ! ps p "$owner" ; then
-    rm -f "$1"
+    rm -f "${file}"
   fi >/dev/null 2>&1
 }
 
