@@ -362,13 +362,17 @@ function git_commit_loop() {
   local _auxPath=$(realpath ${SCRIPT_NAME});
   local _auxFolder=$(dirname ${_auxPath});
 
-  logInfo -n "Watching changes in background";
-  watch -n"${COMMIT_FREQUENCY}" "bash -c \"export PATH=\$PATH:~/github/RT; cd ${_auxFolder}; ${SCRIPT_NAME} _ci\"" > /dev/null &
-  if [ $? -eq 0 ]; then
-    logInfoResult SUCCESS "done";
+  if check_commit_frequency_value; then
+    logInfo -n "Watching changes in background";
+    watch -n"${COMMIT_FREQUENCY}" "bash -c \"export PATH=\$PATH:~/github/RT; cd ${_auxFolder}; ${SCRIPT_NAME} _ci\"" > /dev/null &
+    if [ $? -eq 0 ]; then
+      logInfoResult SUCCESS "done";
+    else
+      logInforResult FAILURE "failed";
+      exitWithErrorCode CANNOT_WATCH_CHANGES_IN_BACKGROUND;
+    fi
   else
-    logInforResult FAILURE "failed";
-    exitWithErrorCode CANNOT_WATCH_CHANGES_IN_BACKGROUND;
+    exitWithErrorCode INVALID_COMMIT_FREQUENCY;
   fi
 }
 
