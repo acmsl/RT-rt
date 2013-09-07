@@ -27,6 +27,8 @@ EOF
 function checkRequirements() {
   checkReq git GIT_NOT_INSTALLED;
   checkReq watch WATCH_NOT_INSTALLED;
+  checkReq realpath REALPATH_NOT_INSTALLED;
+  checkReq bc BC_NOT_INSTALLED;
 }
  
 # Environment
@@ -56,7 +58,7 @@ function defineEnv() {
   export COMMIT_FREQUENCY_DESCRIPTION="The frequency to perform commits, in seconds. The minimum value is 0.1";
   if    [ "${COMMIT_FREQUENCY+1}" != "1" ] \
      || [ "x${COMMIT_FREQUENCY}" == "x" ]; then
-    export COMMIT_FREQUENCY="${COMMIT_FREQUENCY}";
+    export COMMIT_FREQUENCY="${COMMIT_FREQUENCY_DEFAULT}";
   fi
   
   ENV_VARIABLES=(\
@@ -75,6 +77,7 @@ function defineErrors() {
   export GIT_NOT_INSTALLED="git not installed";
   export WATCH_NOT_INSTALLED="watch not installed";
   export REALPATH_NOT_INSTALLED="realpath not installed";
+  export BC_NOT_INSTALLED="bc not installed";
   export COMMAND_IS_MANDATORY="command is mandatory";
   export INVALID_COMMAND="Invalid command";
   export REMOTE_REPOSITORY_IS_MANDATORY="remote repository url is mandatory";
@@ -91,6 +94,7 @@ function defineErrors() {
     GIT_NOT_INSTALLED \
     WATCH_NOT_INSTALLED \
     REALPATH_NOT_INSTALLED \
+    BC_NOT_INSTALLED \
     COMMAND_IS_MANDATORY \
     INVALID_COMMAND \
     REMOTE_REPOSITORY_IS_MANDATORY \
@@ -202,8 +206,6 @@ function check_not_already_running() {
     fi
   fi
 
-  echo "returning ${rescode}";
-  exit 1;
   return ${rescode};
 }
 
@@ -249,6 +251,12 @@ purge_stale_lock () {
   local owner
   local shell
   local status
+  local file="${1}";
+  if [ "x${file}" == "x" ]; then
+    retrieve_lock_file_path "${COMMAND}";
+    file="${RESULT}";
+  fi
+
   if
     read owner shell status <"$1" &&
     test "$status" = valid &&
@@ -278,12 +286,12 @@ function multiply_by_ten_no_decimals() {
   result="$(echo "scale=0; $result/1" | bc)";
 
   export RESULT="${result}";
-fi
+}
 
 function check_commit_frequency() {
   local rescode=0;
-
-  if [ $((COMMIT_FREQUENCY < 0.1)) ]; then
+  multiply_by_ten_no_decimals "${COMMIT_FREQUENCY}";
+  if [ ${RESULT} -lt 1 ]; then
     rescode=1;
   fi
 
@@ -315,19 +323,23 @@ function git_init() {
         if [ $rescode -eq 0 ]; then
           logInfoResult SUCCESS "done";
         else
+          purge_stale_lock
           logInfoResult FAILURE "failed";
           exitWithErrorCode CANNOT_SETUP_GIT_REPOSITORY;
         fi
       else
+        purge_stale_lock
         logInfoResult FAILURE "failed";
         exitWithErrorCode CANNOT_SETUP_GIT_REPOSITORY;
       fi
     else
+      purge_stale_lock
       rm -rf "${GIT_DIR}" 2>&1 > /dev/null
       logInfoResult FAILURE "failed";
       exitWithErrorCode CANNOT_SETUP_GIT_REPOSITORY;
     fi
   else
+    purge_stale_lock
     logInfoResult FAILURE "failed";
     exitWithErrorCode CANNOT_SETUP_GIT_REPOSITORY;
   fi
@@ -346,6 +358,7 @@ function git_add_files() {
     echo git --git-dir "${GIT_DIR}" --work-tree . add --ignore-errors ${_add} 2>&1 > /dev/null | sh
     rescode=$?;
     if [ $rescode -ne 0 ]; then
+      purge_stale_lock
       logInfoResult FAILURE "failed";
       exitWithErrorCode CANNOT_ADD_FILES;
     fi
@@ -380,16 +393,18 @@ function git_commit_loop() {
   local _auxPath=$(realpath ${SCRIPT_NAME});
   local _auxFolder=$(dirname ${_auxPath});
 
-  if check_commit_frequency_value; then
+  if check_commit_frequency; then
     logInfo -n "Watching changes in background";
     watch -n"${COMMIT_FREQUENCY}" "bash -c \"export PATH=\$PATH:~/github/RT; cd ${_auxFolder}; ${SCRIPT_NAME} _ci\"" > /dev/null &
     if [ $? -eq 0 ]; then
       logInfoResult SUCCESS "done";
     else
-      logInforResult FAILURE "failed";
+      purge_stale_lock
+      logInfoResult FAILURE "failed";
       exitWithErrorCode CANNOT_WATCH_CHANGES_IN_BACKGROUND;
     fi
   else
+    purge_stale_lock
     exitWithErrorCode INVALID_COMMIT_FREQUENCY;
   fi
 }
@@ -404,6 +419,7 @@ function git_push() {
   if [ $rescode -eq 0 ]; then
     logInfoResult SUCCESS "done";
   else
+    purge_stale_lock
     logInfoResult FAILURE "failed";
     exitWithErrorCode CANNOT_PUSH_CHANGES;
   fi  
