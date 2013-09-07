@@ -272,6 +272,14 @@ function delete_lock_file() {
   rm -f "${_lockFile}" 2>&1 > /dev/null;
 }
 
+function multiply_by_ten_no_decimals() {
+  local value="${1}";
+  local result="$(echo "scale=1; (${value} * 10)" | bc)";
+  result="$(echo "scale=0; $result/1" | bc)";
+
+  export RESULT="${result}";
+fi
+
 function check_commit_frequency() {
   local rescode=0;
 
