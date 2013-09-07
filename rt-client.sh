@@ -268,8 +268,11 @@ purge_stale_lock () {
     test "$status" = valid &&
     ! ps p "$shell" &&
     ! ps p "$owner" ; then
+    echo "Removing ${file}";
     rm -f "${file}"
-  fi >/dev/null 2>&1
+  else
+    echo "Not removing ${file}";
+  fi #>/dev/null 2>&1
 }
 
 function create_lock_file() {
