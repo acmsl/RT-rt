@@ -414,7 +414,7 @@ function git_push() {
 
   logInfo -n "Pushing changes";
 
-  git --git-dir "${GIT_DIR}" --work-tree . push origin master 2>&1 > /dev/null
+  git --git-dir "${GIT_DIR}" --work-tree . push origin master > /dev/null 2>&1
   rescode=$?;
   purge_stale_lock
   if [ $rescode -eq 0 ]; then
