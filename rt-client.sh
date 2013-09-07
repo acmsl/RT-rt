@@ -416,8 +416,8 @@ function git_push() {
 
   git --git-dir "${GIT_DIR}" --work-tree . push origin master 2>&1 > /dev/null
   rescode=$?;
+  purge_stale_lock
   if [ $rescode -eq 0 ]; then
-    purge_stale_lock
     logInfoResult SUCCESS "done";
   else
     purge_stale_lock
