@@ -143,20 +143,20 @@ function checkInput() {
 
 function main() {
 
+  retrieve_lock_file_path "${COMMAND}";
+  local _lockFile="${RESULT}";
+
   case "${COMMAND}" in
     "init")
-      check_not_already_running "${COMMAND}";
-      if [ $? -eq 0 ]; then
-        create_lock_file "${COMMAND}";
+      if acquire_lock "${_lockFile}"; then
         git_init "${REMOTE_REPOS}";
-        delete_lock_file "${COMMAND}";
+        purge_stale_lock "${_lockFile}";
       else
         exitWithErrorCode ANOTHER_RT_ALREADY_RUNNING;
       fi       
       ;;
     "commit")
-      if [ $? -eq 0 ]; then
-        create_lock_file "${COMMAND}";
+      if acquire_lock "${_lockFile}"; then
         git_commit_loop;
       else
         exitWithErrorCode ANOTHER_RT_ALREADY_RUNNING;
@@ -166,10 +166,9 @@ function main() {
       git_commit;
       ;;
     "push")
-      if [ $? -eq 0 ]; then
-        create_lock_file "${COMMAND}";
+      if acquire_lock "${_lockFile}"; then
         git_push;
-        delete_lock_file "${COMMAND}";
+        purge_stale_lock "${_lockFile}";
       else
         exitWithErrorCode ANOTHER_RT_ALREADY_RUNNING;
       fi       
@@ -196,6 +195,57 @@ function check_not_already_running() {
   echo "returning ${rescode}";
   exit 1;
   return ${rescode};
+}
+
+function retrieve_lock_file_path() {
+  local arg="${1}";
+
+  local _auxPath="$(realpath ${SCRIPT_NAME})";
+  local result="$(dirname "${_auxPath}")/.${SCRIPT_NAME}-${arg}.lock";
+
+  export RESULT="${result}";
+}
+
+# Acquire specified lock.
+# @param the lock file.
+# @return 0 if successful, 1 if not
+
+acquire_lock () {
+  local me=$(sh -c 'echo $PPID')
+  local owner
+  local shell
+  local status
+  local rescode
+  local flags=$-
+  set -o noclobber #make output redirection into atomic test-and-set
+
+  if echo $me $$ valid >"$1"; then
+    result=0
+  else
+    read owner shell status <"$1"
+    test "$owner $shell $status" = "$me $$ valid"
+    result=$?
+  fi 2>/dev/null
+  set +$- -$flags
+  return $result
+}
+
+# Remove specified lock if stale (valid, but neither the
+# owning process nor the shell that spawned it are still
+# running)
+# @param the lock file.
+
+purge_stale_lock () {
+  local owner
+  local shell
+  local status
+  if
+    read owner shell status <"$1" &&
+    test "$status" = valid &&
+    ! ps p "$shell" &&
+    ! ps p "$owner" ; then
+    rm -f "$1"
+  fi >/dev/null 2>&1
 }
 
 function create_lock_file() {
