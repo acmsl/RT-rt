@@ -51,6 +51,13 @@ function defineEnv() {
      || [ "x${EXTENSIONS}" == "x" ]; then
     export EXTENSIONS="${EXTENSIONS_DEFAULT}";
   fi
+
+  export COMMIT_FREQUENCY_DEFAULT="1";
+  export COMMIT_FREQUENCY_DESCRIPTION="The frequency to perform commits, in seconds. The minimum value is 0.1";
+  if    [ "${COMMIT_FREQUENCY+1}" != "1" ] \
+     || [ "x${COMMIT_FREQUENCY}" == "x" ]; then
+    export COMMIT_FREQUENCY="${COMMIT_FREQUENCY}";
+  fi
   
   ENV_VARIABLES=(\
     GIT_BASEDIR \
