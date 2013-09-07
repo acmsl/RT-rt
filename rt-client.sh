@@ -231,10 +231,16 @@ acquire_lock () {
   local flags=$-
   set -o noclobber #make output redirection into atomic test-and-set
 
-  if echo $me $$ valid >"$1"; then
+  local file="${1}";
+  if [ "x${file}" == "x" ]; then
+    retrieve_lock_file_path "${COMMAND}";
+    file="${RESULT}";
+  fi
+
+  if echo $me $$ valid >"${file}"; then
     result=0
   else
-    read owner shell status <"$1"
+    read owner shell status <"${file}"
     test "$owner $shell $status" = "$me $$ valid"
     result=$?
   fi 2>/dev/null
