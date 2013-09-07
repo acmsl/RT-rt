@@ -420,7 +420,6 @@ function git_push() {
   if [ $rescode -eq 0 ]; then
     logInfoResult SUCCESS "done";
   else
-    purge_stale_lock
     logInfoResult FAILURE "failed";
     exitWithErrorCode CANNOT_PUSH_CHANGES;
   fi  
