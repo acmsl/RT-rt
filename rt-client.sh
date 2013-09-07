@@ -272,6 +272,16 @@ function delete_lock_file() {
   rm -f "${_lockFile}" 2>&1 > /dev/null;
 }
 
+function check_commit_frequency() {
+  local rescode=0;
+
+  if [ $((COMMIT_FREQUENCY < 0.1)) ]; then
+    rescode=1;
+  fi
+
+  return ${rescode};
+}
+
 function git_init() {
   local _remoteRepos="${1}";
   local rescode=0;
